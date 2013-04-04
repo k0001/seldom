@@ -1,0 +1,3 @@
+./
+git://github.com/k0001/pipes-attoparsec.git interleave3
+git://github.com/Gabriel439/Haskell-Pipes-Parse-Library.git parseWith

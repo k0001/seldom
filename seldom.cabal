@@ -1,0 +1,26 @@
+name:                seldom
+version:             0.0.0.1
+synopsis:            HTTP server built on pipes
+description:         HTTP server built on pipes
+homepage:            https://github.com/k0001/seldom.git
+license:             BSD3
+license-file:        LICENSE
+author:              Renzo Carbonara
+maintainer:          renzocarbonaraλgmail.com
+copyright:           Copyright (c) 2013 Renzo Carbonara
+category:            Network
+build-type:          Simple
+cabal-version:       >=1.8
+extra-source-files:  README.md
+
+library
+  hs-source-dirs:    src
+  exposed-modules:   Seldom.Internal.Parsing
+  -- other-modules:
+  build-depends:     base             (>=4.5     && <5.0)
+                   , attoparsec       (>=0.10    && <0.11)
+                   , pipes            (>=3.2     && <3.3)
+                   , pipes-attoparsec (>=0.2     && <0.3)
+                   , pipes-network    (>=0.1.0.1 && <0.3)
+                   , pipes-parse      (>=1.0     && <1.1)
+
