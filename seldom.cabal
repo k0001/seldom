@@ -30,3 +30,15 @@ library
                    , pipes-parse      (>=1.0     && <1.1)
                    , time             (>=1.4     && <1.5)
 
+test-suite seldom-tests
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      tests
+  main-is:             Main.hs
+  build-depends:       seldom
+                     , base
+                     , text
+                     , bytestring
+                     , QuickCheck                 >= 2.5
+                     , test-framework             >= 0.7
+                     , test-framework-quickcheck2 >= 0.3
+
