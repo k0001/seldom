@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -----------------------------------------------------------------------------
--- The code in this file was originally from snap-core-0.9.3.1, made
+-- Some code in this file was originally from snap-core-0.9.3.1, made
 -- available under the following terms (BSD3):
 --
 --  Copyright (c) 2009, Snap Framework authors (see CONTRIBUTORS)
@@ -62,8 +62,10 @@ import           Data.Monoid
 import           Data.Word
 import           GHC.Exts
 import           GHC.Word                      (Word8 (..))
+import qualified Network.HTTP.Types            as H
 import           Prelude                       hiding (head, take, takeWhile)
 
+import           Seldom.Request
 import           Seldom.Internal.Cookie
 import qualified Seldom.Internal.Parsing.FastSet as FS
 
@@ -128,13 +130,13 @@ fieldCharSet = generateFS f
 
 ------------------------------------------------------------------------------
 -- | Parser for request headers.
-pHeaders :: Parser [(ByteString, ByteString)]
+pHeaders :: Parser [H.Header]
 pHeaders = many header
   where
     --------------------------------------------------------------------------
     header            = {-# SCC "pHeaders/header" #-}
-                        liftA2 (,)
-                            fieldName
+                         liftA2 (,)
+                            (liftA CI.mk fieldName)
                             (char ':' *> spaces *> contents)
 
     --------------------------------------------------------------------------
@@ -489,3 +491,69 @@ unsafeFromInt = S.foldl' f 0
     f !cnt !i = cnt * 10 + toEnum (digitToInt i)
 {-# INLINE unsafeFromInt #-}
 
+
+
+------------------------------------------------------------------------------
+
+                             --------------------------
+                             -- Request line parsing --
+                             --------------------------
+
+
+data RequestLine = RequestLine
+  { reqLineMethod  :: !H.StdMethod
+  , reqLineUri     :: !S.ByteString
+  , reqLineVersion :: !H.HttpVersion
+  } deriving (Eq, Ord, Show)
+
+pRequestLine :: Parser RequestLine
+pRequestLine = do
+    method <- pHttpMethod <* char ' '
+    uri <- toUri =<< (takeWhile1 (/= ' ') <* char ' ')
+    version <- pHttpVersion <* untilEOL <* crlf
+    return $! RequestLine method uri version
+  where
+    toUri = maybe mzero return . urlDecode
+
+pHttpVersion :: Parser H.HttpVersion
+pHttpVersion = "HTTP/" *> ver
+  where
+    ver = string "1.1" *> pure H.http11 <|>
+          string "1.0" *> pure H.http10 <|>
+          string "0.9" *> pure H.http09
+
+pHttpMethod :: Parser H.StdMethod
+pHttpMethod =
+    string "GET"     *> pure H.GET     <|>
+    string "POST"    *> pure H.POST    <|>
+    string "HEAD"    *> pure H.HEAD    <|>
+    string "PUT"     *> pure H.PUT     <|>
+    string "DELETE"  *> pure H.DELETE  <|>
+    string "TRACE"   *> pure H.TRACE   <|>
+    string "CONNECT" *> pure H.CONNECT <|>
+    string "OPTIONS" *> pure H.OPTIONS <|>
+    string "PATCH"   *> pure H.PATCH
+
+parseRequestLine :: ByteString -> Maybe RequestLine
+parseRequestLine = parseToCompletion pRequestLine
+
+------------------------------------------------------------------------------
+
+pRequest :: Parser RequestMsg
+pRequest = do
+    rLine <- pRequestLine
+    rHeaders <- pHeaders
+    return RequestMsg
+      { reqmMethod         = reqLineMethod rLine
+      , reqmHttpVersion    = reqLineVersion rLine
+      , reqmRawPathInfo    = rawPathInfo (reqLineUri rLine)
+      , reqmRawQueryString = rawQueryString (reqLineUri rLine)
+      , reqmHeaders        = rHeaders
+      }
+  where
+    rawQueryString = S.dropWhile (=='?') . S.dropWhile (/='?')
+    rawPathInfo = S.takeWhile (/='?')
+
+
+
+------------------------------------------------------------------------------
