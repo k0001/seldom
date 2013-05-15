@@ -15,10 +15,11 @@ extra-source-files:  README.md
 
 library
   hs-source-dirs:    src
-  exposed-modules:   Seldom.Internal.Parsing
-  other-modules:     Seldom.Internal.Parsing.FastSet
+--  exposed-modules:   Seldom.Server
+  other-modules:     Seldom.Internal.Request
                      Seldom.Internal.Cookie
-                     Seldom.Request
+                     Seldom.Internal.Parsing
+                     Seldom.Internal.Parsing.FastSet
   build-depends:     base             (>=4.5     && <5.0)
                    , attoparsec       (>=0.10    && <0.11)
                    , blaze-builder    (>=0.3     && <0.4)

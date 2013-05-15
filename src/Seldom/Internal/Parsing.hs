@@ -65,9 +65,9 @@ import           GHC.Word                      (Word8 (..))
 import qualified Network.HTTP.Types            as H
 import           Prelude                       hiding (head, take, takeWhile)
 
-import           Seldom.Request
 import           Seldom.Internal.Cookie
 import qualified Seldom.Internal.Parsing.FastSet as FS
+import           Seldom.Internal.Request
 
 ------------------------------------------------------------------------------
 {-# INLINE fullyParse #-}
@@ -539,21 +539,16 @@ parseRequestLine = parseToCompletion pRequestLine
 
 ------------------------------------------------------------------------------
 
-pRequest :: Parser RequestMsg
+pRequest :: Parser Request
 pRequest = do
     rLine <- pRequestLine
     rHeaders <- pHeaders
-    return RequestMsg
-      { reqmMethod         = reqLineMethod rLine
-      , reqmHttpVersion    = reqLineVersion rLine
-      , reqmRawPathInfo    = rawPathInfo (reqLineUri rLine)
-      , reqmRawQueryString = rawQueryString (reqLineUri rLine)
-      , reqmHeaders        = rHeaders
+    return Request
+      { reqMethod         = reqLineMethod rLine
+      , reqUri            = reqLineUri rLine
+      , reqHttpVersion    = reqLineVersion rLine
+      , reqHeaders        = rHeaders
       }
-  where
-    rawQueryString = S.dropWhile (=='?') . S.dropWhile (/='?')
-    rawPathInfo = S.takeWhile (/='?')
 
 
 
-------------------------------------------------------------------------------

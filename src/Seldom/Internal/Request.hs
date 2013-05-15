@@ -26,9 +26,9 @@
 -- WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ------------------------------------------------------------------------------
 
-module Seldom.Request (
-    RequestMsg(..)
-  , Request(..)
+module Seldom.Internal.Request (
+    Request(..)
+  , RequestMeta(..)
   ) where
 
 
@@ -39,38 +39,31 @@ import qualified Network.HTTP.Types            as H
 
 --------------------------------------------------------------------------------
 
-data RequestMsg = RequestMsg
-  {  reqmMethod         :: !H.StdMethod
-  ,  reqmHttpVersion    :: !H.HttpVersion
-  -- | Extra path information sent by the client. The meaning varies slightly
-  -- depending on backend; in a standalone server setting, this is most likely
-  -- all information after the domain name. In a CGI application, this would be
-  -- the information following the path to the CGI executable itself.
-  -- Do not modify this raw value- modify pathInfo instead.
-  ,  reqmRawPathInfo    :: !B.ByteString
-  -- | If no query string was specified, this should be empty. This value
-  -- /will/ include the leading question mark.
-  -- Do not modify this raw value- modify queryString instead.
-  ,  reqmRawQueryString :: !B.ByteString
-  ,  reqmHeaders        :: !H.RequestHeaders
+data Request = Request
+  { reqMethod         :: !H.StdMethod
+  , reqUri            :: !B.ByteString
+  , reqHttpVersion    :: !H.HttpVersion
+  , reqHeaders        :: !H.RequestHeaders
   } deriving (Eq, Ord, Show, Typeable)
 
--- | Information on the request sent by the client. This abstracts away the
--- details of the underlying implementation.
-data Request = Request {
+data RequestMeta = RequestMeta {
   -- | The request message data.
-     reqMsg         :: !RequestMsg
+     reqmReq         :: !Request
   -- | Generally the host requested by the user via the Host request header.
   -- Backends are free to provide alternative values as necessary. This value
   -- should not be used to construct URLs.
-  ,  reqServerName  :: !B.ByteString
+  ,  reqmServerName  :: !B.ByteString
   -- | The listening port that the server received this request on. It is
   -- possible for a server to listen on a non-numeric port (i.e., Unix named
   -- socket), in which case this value will be arbitrary. Like 'serverName',
   -- this value should not be used in URL construction.
-  ,  reqServerPort  :: !B.ByteString
+
+  -- | If no query string was specified, this should be empty. This value
+  -- /won't/ include the leading question mark.
+  ,  reqQueryString    :: !B.ByteString
+  ,  reqmServerPort  :: !B.ByteString
   -- | Was this request made over an SSL/TLS connection?
-  ,  reqIsSecure    :: !Bool
+  ,  reqmIsSecure    :: !Bool
   -- | The client\'s host information.
-  ,  reqRemoteHost  :: !NS.SockAddr
+  ,  reqmRemoteHost  :: !NS.SockAddr
   } deriving (Eq, Show, Typeable)
